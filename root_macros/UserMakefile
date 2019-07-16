@@ -1,0 +1,91 @@
+CC=c++
+
+ROOT_CFLAGS=$(shell root-config --cflags)
+ROOT_LIBS=$(shell root-config --ldflags --glibs) -lSpectrum
+
+INCLUDES=-I. $(ROOT_CFLAGS)
+LDLIBS=$(ROOT_LIBS)
+CXXFLAGS=-g   $(INCLUDES)
+LDFLAGS=-g 
+
+PREFIX=/usr/local
+UNAME_S := $(shell uname -s)
+ifeq ($(UNAME_S),Linux)
+        SO=so
+        SO_FLAGS=-shared 
+        CCFLAGS += -fPIC -DLINUX 
+        CXXFLAGS += -fPIC -DLINUX
+endif
+ifeq ($(UNAME_S),Darwin)
+        SO=dylib
+        SO_FLAGS=-mmacosx-version-min=10.7 -dynamiclib  -install_name @rpath/$@
+        CCFLAGS += -fPIC -DOSX -mmacosx-version-min=10.7
+        CXXFLAGS += -fPIC -DOSX -mmacosx-version-min=10.7
+endif
+
+
+SOURCES=analysis.cc DataFileRoot.cc HDFRoot.cc AsciiRoot.cc ChanList.cc  \
+               Tracer.cc utils.cc Hit.cc  crrc.cc run_analysis.cc
+
+all: libAlibavaRoot.$(SO) run_analysis
+
+libAlibavaRoot.$(SO) : analysis.o DataFileRoot.o HDFRoot.o AsciiRoot.o ChanList.o Tracer.o utils.o Hit.o crrc.o alibavaCint.o
+	$(LINK.c) $(SO_FLAGS) -o $@  $^ $(ROOT_LIBS)
+
+alibavaCint.cc alibavaCint.h:  analysis.h DataFileRoot.h HDFRoot.h AsciiRoot.h Tracer.h ChanList.h utils.h Hit.h Data.h crrc.h sin_preguntas.h alibava_linkdef.h
+	@echo "Generating dictionary ..."
+	rootcint -f $@ -c -p $(INCLUDES)  $^ 
+
+run_analysis: libAlibavaRoot.$(SO) run_analysis.o 
+	$(LINK.o) run_analysis.o -L. -lAlibavaRoot $(LOADLIBES) $(LDLIBS)  -o $@
+	
+
+clean:
+	rm -f libAlibavaRoot.$(SO) *.o* *Cint.*
+
+install: libAlibavaRoot.$(SO)
+	install -d $(PREFIX)/include/alibava/root 
+	install -c analysis.h AsciiRoot.h Tracer.h utils.h Hit.h Data.h ChanList.h sin_preguntas.h alibavaCint.h $(PREFIX)/include/alibava/root 
+	install -d $(PREFIX)/lib 
+	install -c libAlibavaRoot.$(SO) $(PREFIX)/lib 
+	install -c run_analysis $(PREFIX)/bin
+
+DEPS_MAGIC := $(shell mkdir .deps > /dev/null 2>&1 || :)
+-include $(SOURCES:%.cc=.deps/%.P) 
+
+%.o: %.cc
+	@echo "Compiling $<..."
+	@$(COMPILE.cc) -Wp,-MD,.deps/$(*F).pp -c $<
+	@-cp .deps/$(*F).pp .deps/$(*F).P; \
+        tr ' ' '\012' < .deps/$(*F).pp \
+          | sed -e 's/^\\$$//' -e '/^$$/ d' -e '/:$$/ d' -e 's/$$/ :/' \
+            >> .deps/$(*F).P; \
+        rm .deps/$(*F).pp
+
+distdir=alibava-root-1.2
+
+remove_distdir = \
+  { test ! -d "$(distdir)" \
+    || { find "$(distdir)" -type d ! -perm -200 -exec chmod u+w {} ';' \
+         && rm -fr "$(distdir)"; }; }
+
+SRCS := AsciiRoot.cc Data.h Tracer.h AsciiRoot.h Hit.cc alibava_linkdef.h utils.cc \
+ChanList.cc       Hit.h             analysis.cc       sin_preguntas.C  utils.h \
+ChanList.h        Tracer.cc         analysis.h        sin_preguntas.h  \
+fix_header.C dump_data.C DataFileRoot.cc DataFileRoot.h HDFRoot.cc HDFRoot.h \
+crrc.h crrc.cc run_analysis.cc
+
+DISTFILES=$(SRCS)
+
+distdir: $(DISTFILES)
+	$(remove_distdir)
+	test -d "$(distdir)" || mkdir "$(distdir)"
+	dist_files='$(DISTFILES)'; \
+	cp -fpR UserMakefile $(distdir)/Makefile; \
+        for file in $$dist_files; do \
+           cp -fpR $$file $(distdir); \
+        done
+
+ dist: distdir   
+	tar zcf $(distdir).tar.gz $(distdir)
+	$(remove_distdir)

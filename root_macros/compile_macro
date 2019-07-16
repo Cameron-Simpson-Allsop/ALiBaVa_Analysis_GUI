@@ -1,0 +1,50 @@
+#!/bin/bash
+
+targets=
+libs=
+while [ "$1"x != "x" ]; do
+    suff=`basename $1 | cut -f2 -d'.'`
+    if [ "$suff" = "ld" ]; then
+		name=`basename $1 .ld | sed -e's/_cc/.cc/g' -e's/_C/\.C/g'`
+		libs="$libs $name"
+    else
+		targets="$targets $1"
+    fi
+    shift 1
+done
+
+TMP=`mktemp -t compile_macro.XXXXXX`
+trap "rm $TMP* 2>/dev/null" EXIT
+
+cat - > $TMP <<EOF
+int LoadMacro(char *lnam)
+{
+    printf(":> Loading %s\n");
+    return  gROOT->LoadMacro(lnam);
+}
+void compile_macro() {
+//	char line[1024];
+//	sprintf(line,"%s -I ${top_srcdir}/root_macros", gSystem->GetIncludePath());
+//    gSystem->SetIncludePath(line);
+//	sprintf(line,"%s:${top_srcdir}/root_macros", gSystem->GetDynamicPath());
+//	gSystem->SetDynamicPath(line);
+//	printf("Include Path: %s\n", gSystem->GetIncludePath());
+//    printf("Dynamic Path: %s\n", gSystem->GetDynamicPath());
+
+EOF
+#echo "{" >> $TMP
+
+for lib in $libs; do
+    cat - >> $TMP <<EOF
+	LoadMacro( "$lib+" );
+EOF
+done
+
+for target in $targets; do
+    cat - >> $TMP <<EOF
+	LoadMacro("$target+");
+EOF
+done
+
+echo "gSystem->Exit(0);}" >> $TMP
+root -l -q -n -b $TMP

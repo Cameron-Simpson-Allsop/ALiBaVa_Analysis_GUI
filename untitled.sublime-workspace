@@ -1,0 +1,453 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Bias",
+				"biasVoltage"
+			],
+			[
+				"GetX",
+				"GetX"
+			],
+			[
+				"cce",
+				"CCEoutput"
+			],
+			[
+				"Peak",
+				"PeakVec"
+			],
+			[
+				"SEt",
+				"SetMaximum"
+			],
+			[
+				"Get",
+				"GetYaxis"
+			],
+			[
+				"SET",
+				"SetTitle"
+			],
+			[
+				"GET",
+				"GetYaxis"
+			],
+			[
+				"sETT",
+				"SetTitle"
+			],
+			[
+				"cc",
+				"CCE_hist"
+			],
+			[
+				"CCE",
+				"CCE_hist"
+			],
+			[
+				"re",
+				"replot"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"file": "window.h",
+			"settings":
+			{
+				"buffer_size": 48162,
+				"encoding": "UTF-8",
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"contents": "#ifndef WINDOW_H\n#define WINDOW_H\n\n#include <QWidget>\n#include <QDesktopWidget>\n#include <QLineEdit>\n#include <QApplication>\n#include <QProgressBar>\n#include <QSlider>\n#include <QComboBox>\n#include <QStringList>\n#include <QLabel>\n#include <QPushButton>\n#include <QDial>\n#include <iostream>\n#include <fstream>\n//#include <QtGui/QApplication>\n#include <QtWidgets/QApplication>\n\n\n\n#include <TF1.h>\n#include <TH1.h>\n#include <TH2.h>\n#include <TGraph.h>\n#include <TROOT.h>\n#include <TStyle.h>\n#include <TCanvas.h>\n#include <TTree.h>\n#include <cmath>\n#include <TProfile.h>\n#include \"TKey.h\"\n#include <TImage.h>\n#include <TFile.h>\n\n#include \"DataFileRoot.h\"\n#include <boost/filesystem.hpp>\n#include <iomanip>\n#include <qcustomplot.h>\n\n\n\n#include <sstream>\n#include <stdio.h>\n#include <iostream>\n#include <fstream>\n#include <memory>\n#include <cmath>\n#include <string>\n#include <cstring>\n#include <TStyle.h>\n#include <TAttMarker.h>\n//#include <direct.h>\n#include <sys/stat.h>\n\n#ifndef __CINT__\n#include \"RooGlobalFunc.h\"\n#endif\n#include \"RooRealVar.h\"\n#include \"RooDataSet.h\"\n#include \"RooDataHist.h\"\n#include \"RooGaussian.h\"\n#include \"RooLandau.h\"\n#include \"RooFFTConvPdf.h\"\n#include \"RooPlot.h\"\n#include \"RooHistPdf.h\"\n#include \"RooAddPdf.h\"\n#include \"RooMsgService.h\"\n\n#include <cstdlib>\n#include <iomanip>\n#include <sstream>\n\n#include \"TF1.h\"\n#include \"TH1.h\"\n#include \"TH2.h\"\n#include \"TGraph.h\"\n#include \"TCanvas.h\"\n#include \"TLegend.h\"\n#include \"TFile.h\"\n#include \"TKey.h\"\n#include \"TTree.h\"\n#include \"TGraphErrors.h\"\n#include \"TLatex.h\"\n#include <TROOT.h>\n#include \"AtlasStyle.h\"\n#include \"TLine.h\"\n//#include <QCPPlotTitle>\n\n\nusing namespace RooFit ;\n\n\n\n\n\n\nnamespace Ui{\n\n  class Window;\n}\n\nclass Window : public QWidget\n{\n  Q_OBJECT\n\n\n public:\n  explicit Window(QWidget *parent = 0);\n    \n    \n  QGraphicsPixmapItem* ClusterTimePicture;\n        \n    \n  QLineEdit* input_pathToFileList;\n  QLineEdit* input_pathToAnalysisDirectory;\n  QLineEdit* input_sensorName;\n\n  QLineEdit* input_seedCut;\n  QLineEdit* input_neighbourCut;\n  QLineEdit* input_minimumClusterSize;\n  QLineEdit* input_lowerTimeCut;\n  QLineEdit* input_upperTimeCut;\n  QLineEdit* input_Temperature;\n  QLineEdit* input_plotTitle;\n\n  QLineEdit* currentEvent;\n  QLineEdit* currentFile;\n\n\n  QLabel* label_pathToFileList;\n  QLabel* label_pathToAnalysisDirectory;\n  QLabel* label_statusOfSensor;\n  QLabel* label_sensorName;\n  QLabel* label_seedCut;\n  QLabel* label_neighbourCut;\n  QLabel* label_minimumClusterSize;\n  QLabel* label_currentEvent;\n  QLabel* label_currentFile;\n  QLabel* label_lowerTimeCut;\n  QLabel* label_upperTimeCut;\n  QLabel* label_Temperature;\n  QLabel* label_plotTitle;\n  QLabel* label_SensorType;\n\n  QCustomPlot* histogram;\n  QCustomPlot* Qhtotal;\n\n  QSlider* testingSlider;\n\n  QSlider* slider;\n  QComboBox* statusOfSensor;\n  QComboBox* SensorType;\n\n  QPushButton* confirmSettings;\n\n  TCanvas *c = new TCanvas;\n\n  enum ignore{\n    lowercase\n  };\n\n  bool contains_substring(std::string string, std::string substring){\n    bool containsSubstring{false};\n    if (string.find(substring)==std::string::npos) containsSubstring = false;\n    else containsSubstring = true;\n    return containsSubstring;\n  }\n\n  bool contains_substring(std::string string, std::string substring, ignore h){\n    if (h == ignore::lowercase){\n      auto it = std::search(string.begin(), string.end(), substring.begin(), substring.end(), [](char ch1,char ch2) {return std::toupper(ch1) == std::toupper(ch2);});\n      return (it!=string.end());\n    }\n    else throw 101;\n  }\n\n\n  void loopdir (TDirectory* dir,std::vector<int>& V_Bias, std::vector<TH1*>& hst_histsNew, std::vector<TH1*>& h_width_histsNew) {\n    //loop on all keys of dir including possible subdirs\n    //print a message for all keys with a class TH1\n    TIter next (dir->GetListOfKeys());\n    (dir->GetListOfKeys())->Print();\n    TKey *key;\n    while ((key = (TKey*)next())) {\n      TString KeyName = key->GetName();\n\n      if (strstr(key->GetClassName(),\"TH1D\")) {\n\tprintf (\" key : %s is a %s in %s\\n\",\n\t\tkey->GetName(),key->GetClassName(),dir->GetPath());\n      }\n      if (strstr(key->GetClassName(),\"TDirectory\")) {\n\tdir->cd(key->GetName());\n\tTDirectory *subdir = gDirectory;\n\tloopdir(subdir,V_Bias,hst_histsNew,h_width_histsNew);\n\tdir->cd();\n      }\n      if (KeyName.EndsWith(\"_hst\")){\n\tV_Bias.push_back(atoi((KeyName(0, KeyName.Last('V') - 1 )).Data()));\n\tTH1* hstNew = (TH1*) dir->Get(key->GetName());\n\thst_histsNew.push_back(hstNew);\n      }\n      if (KeyName.EndsWith(\"_hwidth\")){\n\tTH1* hwidthNew = (TH1*) dir->Get(key->GetName());\n\th_width_histsNew.push_back(hwidthNew);\n      }\n\n\n    }\n  }\n\n\n\n  std::string stringify(double x, int nplace) {\n\n    x*=pow(10.,nplace);\n    double num = floor(x+0.5)/pow(10.,nplace);\n\n    std::string tmp = \"NULL\";\n    std::ostringstream o;\n\n    if (!(o << std::fixed << std::setprecision(nplace) << num) ) return tmp;\n    return o.str();\n  }\n\n\n  void landgausfit(TFile* SaveFile, TH1* histogram, double& maxCent, double& CentError, double& width, double& widtherr, TString Status,int V_Bias, TString RootFile, TString AnalysisDir)\n  {\n    TString bias_voltage;\n    bias_voltage += V_Bias;\n    bool isIrradiated;\n    if(Status == \"0\") isIrradiated = 0;\n    else isIrradiated = 1;\n\n    /*\n      for(int n=0; n <=300; n++)\n      {\n      //   if( n > histogram->GetNbinsX()) histogram->SetBinContent(n,0.0);\n      std::cout << n << \"    \"  << histogram->GetBinContent(n) << std::endl;\n      }\n    */\n    histogram->Rebin(2);\n\n\n\n    //Construct observable\n    RooRealVar signal(\"s\",\"Signal [ADC]\",0.0,500.0);\n    /* if(isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\", 40,200.); */\n    /* if(isIrradiated && RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.6*maxCent,200.); */\n    /* if(!isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.7*maxCent,200.); */\n    /* if(!isIrradiated && RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.7*maxCent,200.); */\n    /* if(isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",10.,200.); */\n\n    // SETTINGS: Next two lines change fit range for landgaus curves (determined on ATLAS12 sensor)\n    if(isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",15.,175.); // appropriate for irradiated sample\n    // if(isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.5*maxCent,200.);\n    //if(isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",10,150.);\n    //if(isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.6*maxCent,350.); // original code (comment for irradiated)\n    if(isIrradiated && RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.6*maxCent,350.);\n    if(!isIrradiated && !RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.7*maxCent,350.);\n    if(!isIrradiated && RootFile.Contains(\"KAZU\") ) signal.setRange(\"fitrange\",0.7*maxCent,350.);\n\n    /*\n    //Create background out of noise data\n    TFile *noiseFile = new TFile(RootFile+\".root\",\"READ\");\n    TH1 *noisehist;\n\n    TString noisename = bias_voltage;\n    noisename += \"V_hst_pos\";\n    noisehist = (TH1*) noiseFile->Get(noisename);\n\n    noisehist->Rebin(2);\n\n    if (!noisehist)\n    std::cout << \"Doesn't point to anything - V = \" << V_Bias << std::endl;\n\n    RooDataHist noisedata(\"noisedata\",\"noisedata\",signal,noisehist);\n    RooHistPdf backgroundModel(\"backgroundModel\", \"backgroundModel\", signal, noisedata);\n    backgroundModel.setInterpolationOrder(1);\n    */\n\n    // Construct landau(signal,ml,sl) ;\n    RooRealVar ml(\"ml\",\"mean landau\",maxCent,maxCent - 20,maxCent + 10) ;\n    RooRealVar sl(\"sl\",\"sigma landau\",width,1,150) ;\n    RooLandau landau(\"lx\",\"lx\",signal,ml,sl) ;\n\n    // Construct gauss(signal,mg,sg)\n    RooRealVar mg(\"mg\",\"mg\",0.,-5.,5.);\n    mg.setConstant(kTRUE);\n    RooRealVar sg(\"sg\",\"sg\",1.,0,100) ;\n    //RooFormulaVar sg(\"sg\",\"0.035*sl\",RooArgList(sl));\n    // sg.setConstant(kTRUE);\n    RooGaussian gauss(\"gauss\",\"gauss\",signal,mg,sg) ;\n\n    RooRealVar mg1(\"mg1\",\"mg1\",maxCent,maxCent-20,maxCent+20);\n    RooRealVar sg1(\"sg1\",\"sg1\",1.,1,100);\n    RooGaussian gauss1(\"gauss1\",\"gauss\",signal,mg1,sg1) ;\n\n    RooDataHist data(\"data\",\"hist of signal\", signal, histogram);\n\n    // Set #bins to be used for FFT sampling to 10000\n    signal.setBins(10000,\"cache\") ;\n\n\n    // Construct convoluted pdf lxg(x) = landau(x) (*) gauss(x)\n    RooFFTConvPdf lxg(\"lxg\",\"landau (X) gauss\",signal,landau,gauss);\n    if(V_Bias >= 100 || !isIrradiated) lxg.fitTo(data,Range(\"fitrange\"));\n\n    //RooRealVar Nsignal(\"Ns\",\"Number Signal\",histogram->Integral(),0.,1e6);\n    // RooRealVar Nbackground(\"Nb\",\"Number background\",noisehist->Integral(),0.,1e6);\n    /*\n      RooRealVar bkgfrac(\"bkgfrac\",\"fraction of background\",0.3,0.,0.5);\n      RooAddPdf blxg(\"blxg\",\" Background + landau (X) gauss\", RooArgList(backgroundModel,lxg), RooArgList(bkgfrac));\n    */\n    // int maxbin = noisehist->FindBin(249);\n\n    // double BGNorm = noisehist->Integral(1,maxbin);\n    // double SIGNorm = histogram->Integral(1,maxbin);\n\n    // bkgfrac.setVal(BGNorm/(BGNorm+SIGNorm));\n    // bkgfrac.setConstant(kTRUE);\n\n\n    // lxg.fitTo(data,Range(\"fitrange\"));\n\n    if(V_Bias < 100 && isIrradiated)\n      {\n\tsignal.setRange(\"narrowrange\",maxCent-15,maxCent+15);\n\tgauss1.fitTo(data,Range(\"narrowrange\"));\n      }\n\n    // Plot data, landau pdf, landau (X) gauss pdf\n    RooPlot* frame = signal.frame(Title(\" \")/*,Bins(20)*/) ;\n    data.plotOn(frame,MarkerSize(0.5)) ;\n\n\n    frame->SetYTitle(\"Events/2 ADC\");\n    if((V_Bias >= 100 && isIrradiated) || !isIrradiated) lxg.plotOn(frame,Components(lxg),LineColor(kRed),LineStyle(kDashed));\n    if(V_Bias < 100 && isIrradiated) gauss1.plotOn(frame,Components(gauss1),LineColor(kRed),LineStyle(kDashed));\n\n\n    /* blxg.plotOn(frame) ;\n       blxg.plotOn(frame,Components(backgroundModel),LineColor(kGreen),LineStyle(kDashed));\n       blxg.plotOn(frame,Components(lxg),LineColor(kRed),LineStyle(kDashed));*/\n\n    // Draw frame on canvas\n    TCanvas *landgausfit = new TCanvas(\"rf208_convolution\",\"rf208_convolution\",600,600) ;\n    gPad->SetLeftMargin(0.15) ; frame->GetYaxis()->SetTitleOffset(1.8) ; frame->Draw() ;\n\n    std::cout<<\"test\"<<std::endl;\n    \n    if(V_Bias < 100 && isIrradiated)\n      {\n\tml.setVal(mg1.getVal());\n\tml.setError(mg1.getError());\n\tsl.setVal(sg1.getVal());\n\tsl.setError(sg1.getError());\n      }\n\n    // SETTINGS: Next two lines change error in CCE plot\n    CentError = fabs(maxCent-ml.getVal()); // Use 2 point systematic on landgaus-landau\n    // CentError = ml.getError(); // Use statistical error from fit\n    maxCent = ml.getVal();\n\n\n    TString StringInc1 = \"Peak = \";\n    StringInc1 += stringify(ml.getVal(),1);\n    StringInc1 += \" +/- \";\n    StringInc1 += stringify(ml.getError(),1);\n    StringInc1 += \" ADC \";\n    TString StringInc2 = \"Width = \";\n    StringInc2 += stringify(sl.getVal(),1);\n    StringInc2 += \" +/- \";\n    StringInc2 += stringify(sl.getError(),1);\n    StringInc2 += \" ADC \";\n    TString Voltage = \"Bias Voltage = \";\n    Voltage += V_Bias;\n    Voltage += \"V\";\n\n    TString s_irradiated;\n    if(isIrradiated) s_irradiated = \"POST irradiation\";\n    if(!isIrradiated) s_irradiated = \"PRE irradiation\";\n\n    TLatex* label1 = new TLatex(0.45,0.76,RootFile);\n    label1->SetNDC();\n    label1->SetTextSize(0.035);\n    label1->SetTextFont(42);\n    label1->Draw();\n    TLatex* label2 = new TLatex(0.45,0.72,Voltage);\n    label2->SetNDC();\n    label2->SetTextSize(0.035);\n    label2->SetTextFont(42);\n    label2->Draw();\n    TLatex* label3 = new TLatex(0.45,0.68,StringInc1);\n    label3->SetNDC();\n    label3->SetTextSize(0.035);\n    label3->SetTextFont(42);\n    label3->Draw();\n    TLatex* label4 = new TLatex(0.45,0.64,StringInc2);\n    label4->SetNDC();\n    label4->SetTextSize(0.035);\n    label4->SetTextFont(42);\n    label4->Draw();\n    TLatex* label5 = new TLatex(0.45,0.6,s_irradiated);\n    label5->SetNDC();\n    label5->SetTextSize(0.035);\n    label5->SetTextFont(42);\n    label5->Draw();\n\n    frame->Write( bias_voltage + \"V_landgausfit_frame\");\n    landgausfit->Write( bias_voltage + \"V_landgausfit\");\n    landgausfit->SaveAs(AnalysisDir + \"/\" + RootFile + \"_\" + Status + \"/\" + bias_voltage + \"V_landgausfit.png\");\n    landgausfit->Close();\n    // noiseFile->Close();\n  }\n\n\n\n\n  void ClusterwidthPlots(TString ADir, TString Name, TString Status, TString StatusEntry)\n  {\n    TFile *WidthFile = new TFile(ADir +\"/\" + Name+ \"_\" + StatusEntry + \"/ClusterSize.root\",\"READ\");\n\n    TGraph *g_oneHitFrac = (TGraph*) WidthFile->Get(\"onehit\");\n    TGraph *g_twoHitFrac =(TGraph*) WidthFile->Get(\"twohit\");\n    TGraph *g_threeHitFrac =(TGraph*) WidthFile->Get(\"threehit\");\n    TGraph *g_fourHitFrac = (TGraph*) WidthFile->Get(\"fourhit\");\n    TGraph *g_fourOrMoreHitFrac = (TGraph*) WidthFile->Get(\"fourormorehit\");\n    /* TGraph *g_fiveHitFrac = (TGraph*) WidthFile->Get(\"fivehit\"); */\n\n    if (!g_oneHitFrac)\n      std::cout << \"Doesn't point to anything \" << std::endl;\n\n    TCanvas *widthcan = new TCanvas(\"widthcan\",\"widthcan\",800,600);\n\n    g_oneHitFrac->GetXaxis()->SetTitle(\"Bias Voltage[V]\");\n    g_oneHitFrac->GetYaxis()->SetTitle(\"Relative cluster size\");\n    g_oneHitFrac->SetMarkerColor(1);\n    g_oneHitFrac->SetLineColor(1);\n    g_oneHitFrac->SetMaximum(1);\n    g_oneHitFrac->SetMinimum(0);\n    g_oneHitFrac->Draw(\"ALP\");\n\n    g_twoHitFrac->SetMarkerColor(2);\n    g_twoHitFrac->SetLineColor(2);\n    g_twoHitFrac->SetLineWidth(2);\n    g_twoHitFrac->Draw(\"LP\");\n\n    g_threeHitFrac->SetMarkerColor(3);\n    g_threeHitFrac->SetLineColor(3);\n    g_threeHitFrac->SetLineWidth(2);\n    g_threeHitFrac->Draw(\"LP\");\n\n    g_fourHitFrac->SetMarkerColor(4);\n    g_fourHitFrac->SetLineColor(4);\n    g_fourHitFrac->SetLineWidth(2);\n    g_fourHitFrac->Draw(\"LP\");\n\n    g_fourOrMoreHitFrac->SetMarkerColor(6);\n    g_fourOrMoreHitFrac->SetLineColor(6);\n    g_fourOrMoreHitFrac->SetLineWidth(2);\n    g_fourOrMoreHitFrac->Draw(\"LP\");\n\n    /* g_fiveHitFrac->SetMarkerColor(6); */\n    /* g_fiveHitFrac->SetLineColor(6); */\n    /* g_fiveHitFrac->SetLineWidth(2); */\n    /* g_fiveHitFrac->Draw(\"LP\"); */\n\n\n    TLegend* leg = new TLegend(0.65,0.65,0.90,0.87);\n    leg->AddEntry(g_oneHitFrac,\"1 Hit\",\"L P\");\n    leg->AddEntry(g_twoHitFrac,\"2 Hits\",\"L P\");\n    leg->AddEntry(g_threeHitFrac,\"3 Hit\",\"L P\");\n    leg->AddEntry(g_fourHitFrac,\"4 Hits\",\"L P\");\n    leg->AddEntry(g_fourOrMoreHitFrac,\">4 Hit\",\"L P\");\n    /* leg->AddEntry(g_fiveHitFrac,\"5 Hit\",\"L P\"); */\n    leg->SetBorderSize(0);\n    leg->SetFillColor(0);\n    leg->Draw();\n    std::string outputDirectory3 = (ADir + \"/Combined/\"+ Name + \"/\").Data();\n    boost::filesystem::create_directory(outputDirectory3);\n\n\n    TFile *clustsizeFile = new TFile(ADir+\"/Combined/relClust_Store.root\", \"UPDATE\");\n    widthcan->Write(Name + \"_\" + Status,TObject::kOverwrite);\n\n    widthcan->SaveAs( ADir + \"/Combined/\"+ Name + \"/\" + Name+\"_\"+Status+\"_relativeClusterSize.png\");\n    widthcan->Close();\n\n    clustsizeFile->Close();\n\n  }\n\n\n\n  void Plotter(std::vector<TGraphErrors*> graph,std::vector<TString> label, std::vector<TString> sensor, TString Title, TString AnalysisDir, std::vector<long double> Temperature)\n  {\n    TCanvas *can = new TCanvas(Title,Title,800,600);\n\n    double LegHeight = 0.028*graph.size();\n\n    TAxis *axisX = graph[0]->GetXaxis();\n    TAxis *axisY = graph[0]->GetYaxis();\n\n    TLegend* leg = new TLegend(0.175,0.92-LegHeight,0.9,0.92);\n\n    axisX->SetTitle(\"Bias Voltage [V]\");\n    axisX->CenterTitle();\n    axisX->SetLimits(0,1000);\n    axisY->SetTitle(\"Collected Charge [Ke]\");\n    axisY->CenterTitle();\n\n    leg->SetFillStyle(0);\n    leg->SetNColumns(1);\n\n    can->SetGrid();\n\n    /////////////////Temp correction array //////// /////\n\n    long double* temp = &Temperature[0];\n    long double* correction =&Temperature[0];\n    //           long double temp[2] = {-25,20};//,-24.75,-21.46,-24,-20.03,-26.1,-24,-22.27,-22.27};\n    //           long double correction[2];\n\n    for (int i =0; i <Temperature.size(); i++){\n      correction[i]= 110.4/((-0.383*temp[i])+101); //279.33 relates to -25Deg\n    }\n\n    ///////////////////////////////////////////////\n\n\n    bool justCurve = false;\n\n    TLine * RedLine = new TLine(0.0,0.0,0.0,0.0);\n    RedLine->SetLineColor(kRed);\n    RedLine->SetLineWidth(2);\n\n    if(Title.Contains(\"ASC_2\") || Title.Contains(\"ASC_3\") ) justCurve = true;\n\n    // PRE_hist->SetMarkerStyle(1);\n    //PRE_hist->SetMarkerSize(1);\n    graph[0]->SetMaximum(40.);\n    graph[0]->SetMinimum(0.);\n    graph[0]->SetMarkerColor(1);\n    graph[0]->SetLineColor(1);\n    //axisX -> SetMaximum(1000);\n    //graph[0]->SetMarkerStyle(21);\n    if(!justCurve) leg->AddEntry(graph[0],label[0],\"P\");\n\n\n    if(!justCurve) { graph[0]->Draw(\"ap\"); }\n    else {\n      graph[0]->Draw(\"al\");\n      graph[0]->SetLineColor(kWhite);\n    }\n    //  leg->AddEntry(RedLine,\"A12 Nominal Response\",\"L\");\n\n\n    for(int j=0;j<graph[0]->GetN();j++) graph[0]->GetY()[j] *= 0.202*correction[0];//ADC to ke conversion of 1ADC = 202e\n    //after first run at 32C, looks like needs to larger ny factor 21/17\t\n\n    for(size_t i = 1; i < graph.size();i++)\n      {\n\n\tfor(int j=0;j<graph[i]->GetN();j++) graph[i]->GetY()[j] *= 0.202*correction[i];\n\n\tif (i<14)\n\t  {\n\n\n\t    if(label[i].Contains(\"PostAnneal\",TString::kExact) && sensor[i] == sensor[i+1])\n\t      {\n\n\n\t\tTString tmp_label = label[i];\n\t\tTGraphErrors* tmp_graph = graph[i];\n\n\n\t\tgraph[i] = graph[i+1];\n\t\tgraph[i+1] = tmp_graph;\n\t\tlabel[i] = label[i+1];\n\t\tlabel[i+1] = tmp_label;\n\t      }\n\n\n\t    if(!label[i].Contains(\"PostAnneal\",TString::kExact)/*i%2 != 0*/)\n\n\t      {\n\t\tint k;\n\t\tif(i==4) k=i+2;\n\t\telse k=i+1;\n\t\tstd::cout<<\" i & k = \"<<i<<\" , \"<<k<<std::endl;\n\t\tgraph[i]->SetMarkerColor(k);\n\t\tgraph[i]->SetLineColor(k);\n\n\t      }\n\n\n\n\t    //if(!label[i].Contains(\"Unirradiated\",TString::kExact)&& sensor[i] != sensor[i+1])//stops this applying to everything\n\t    //\n\t    //{\n\t    //\n\t    //graph[i]->SetMarkerColor(i);\n\t    //graph[i]->SetMarkerStyle(21);\n\t    //\n\t    //}\n\n\n\t    else if(sensor[i]==sensor[i-1])\n\t      {\n\n\t\tgraph[i]->SetMarkerColor(graph[i-1]->GetMarkerColor());\n\t\tgraph[i]->SetLineColor(graph[i-1]->GetLineColor());\n\n\t\tgraph[i]->SetMarkerStyle(21);\n\n\t      }\n\n\n\t    else\n\t      {\n\t\tint k;\n\t\tif(i==4) k=i+63;\n\t\telse k=i+1;\n\t\tstd::cout<<\" i & k = \"<<i<<\" , \"<<k<<std::endl;\n\t\tgraph[i]->SetMarkerColor(k);\n\t\tgraph[i]->SetLineColor(k);\n\n\t\tgraph[i]->SetMarkerStyle(21);\n\n\n\t      }\n\n\n\t  }\n\n\tgraph[i]->Draw(\"p\");\n\n\tleg->AddEntry(graph[i],label[i],\"P\");\n\n      }\n\n\n\n    leg->SetTextSize(0.025);\n    leg->SetBorderSize(0);\n    leg->SetFillColor(0);\n    leg->Draw();\n\n\n    can->SaveAs(AnalysisDir+\"/Combined/\"+ Title+\".png\");\n    can->SaveAs(AnalysisDir+\"/Combined/\"+ Title+\".eps\");\n    //can->SaveAs(AnalysisDir+\"/Combined/\"+ Title+\".C\");\n    can->Close();\n  }\n\n\n\n\n\n\n  std::vector<std::string> return_file_names(std::string path){\n\n\n    path += \"/\";\n    std::vector<std::string> fileNames;\n    std::string currentFileName;\n    std::ifstream fileList(path+\"FileList\");\n\n    while(std::getline(fileList, currentFileName)){\n      std::cout << currentFileName;\n      if (contains_substring(currentFileName, \"FileList\")) continue;\n      if (contains_substring(currentFileName, \"RSRun\", ignore::lowercase)){\n\tfileNames.push_back(path+currentFileName);\n\tstd::cout << fileNames.back() << \"\\n\";\n      }\n    }\n    return fileNames;\n  }\n\n signals:\n\n  public slots:\n   void alibava_reader(){\n\n     std::ofstream debuggingOutput (\"debuggingOutputALiBaVaReader.txt\", std::ofstream::out);\n\n     confirmSettings->setText(\"Settings Confirmed\");\n     std::string pathToFileList = input_pathToFileList->text().toStdString();\n     std::string pathToAnalysisDirectory = input_pathToAnalysisDirectory->text().toStdString();\n     std::string sensorName = input_sensorName->text().toStdString();\n     int statusEntry = (statusOfSensor->currentIndex());\n     double seedCut = std::stod(input_seedCut->text().toStdString());\n     double neighbourCut = std::stod(input_neighbourCut->text().toStdString());\n     int minimumClusterSize = std::stoi(input_minimumClusterSize->text().toStdString());\n     double lowerTimeCut = std::stod(input_lowerTimeCut->text().toStdString());\n     double upperTimeCut = std::stod(input_upperTimeCut->text().toStdString());\n     std::string temperatureString = input_Temperature->text().toStdString();\n     std::string PlotTitleString = input_plotTitle->text().toStdString();\n     std::ofstream previousSettings (\"previousSettings.txt\", std::ofstream::out);\n     int SensorTypeEntry = (SensorType->currentIndex());\n\n     previousSettings << pathToFileList << \"\\n\";\n     previousSettings << pathToAnalysisDirectory << \"\\n\";\n     previousSettings << sensorName << \"\\n\";\n     previousSettings << statusEntry << \"\\n\";\n     previousSettings << seedCut << \"\\n\";\n     previousSettings << neighbourCut << \"\\n\";\n     previousSettings << minimumClusterSize << \"\\n\";\n     previousSettings << lowerTimeCut << \"\\n\";\n     previousSettings << upperTimeCut << \"\\n\";\n     previousSettings << temperatureString << \"\\n\";\n     previousSettings << PlotTitleString << \"\\n\";\n     previousSettings << SensorTypeEntry << \"\\n\";\n\n     previousSettings.close();\n\n\n\n     std::vector<std::string> fileNames = return_file_names(pathToFileList);\n\n     std::string outputDirectory1 = pathToAnalysisDirectory;\n     boost::filesystem::create_directory(outputDirectory1);\n\n     std::string outputDirectory = pathToAnalysisDirectory + \"/\" + sensorName+\"_\"+std::to_string(statusEntry);\n     bool outputDirectoryAlreadyExists{false};\n\n     if (boost::filesystem::exists(outputDirectory)) outputDirectoryAlreadyExists = true;\n\n     boost::filesystem::create_directory(outputDirectory);\n     std::ofstream Settings (outputDirectory+\"/Settings.txt\", std::ofstream::out);\n     Settings << \"Path To File List:\" << pathToFileList << \"\\n\";\n     Settings << \"Path To Analysis Directory:\" << pathToAnalysisDirectory << \"\\n\";\n     Settings << \"Sensor Name:\"  << sensorName << \"\\n\";\n     Settings << \"status Entry:\"<< statusEntry << \"\\n\";\n     Settings << \"Seed Cut:\" << seedCut << \"\\n\";\n     Settings << \"Neighbour Cut:\" << neighbourCut << \"\\n\";\n     Settings << \"Minimum Cluster Size:\" << minimumClusterSize << \"\\n\";\n     Settings << \"Lower Time Cut:\" << lowerTimeCut << \"\\n\";\n     Settings << \"Upper Time Cut:\" << upperTimeCut << \"\\n\";\n     Settings << \"Temperature:\" << temperatureString << \"\\n\";\n     Settings << \"Sensor Type:\" << SensorTypeEntry << \"\\n\";\n     Settings.close();\n\n\n     std::vector<long double> Temperature;\n     std::stringstream ss(temperatureString);\n     long double templongdouble;\n     while (ss >> templongdouble)\n       {\n\t Temperature.push_back(templongdouble);\n\t if (ss.peek() == ',') ss.ignore();\n       }\n\n\n     TFile *stripFile;\n     TFile* outputFile;\n     if (!outputDirectoryAlreadyExists){\n       stripFile = new TFile((outputDirectory + \"/strip.root\").c_str(), \"RECREATE\");\n       outputFile = new TFile( (outputDirectory+\"/RAW_\"+sensorName+\".root\").c_str(), \"RECREATE\");\n     }\n     std::vector<TH1*> hst_hists;\n     std::vector<TH1*> h_width_hists;\n     std::vector<int> V_Bias;\n     for (auto it=fileNames.begin();it!=fileNames.end() && !outputDirectoryAlreadyExists;++it){\n\n       double maxSignal = 500.0;\n       std::string channels = \"0-127\";\n       std::string ped_f = \"alibava_ped.ped\";\n\n       std::string inputFile = *it;\n       debuggingOutput << \"Input File:\" <<  inputFile << \"\\n\";\n       currentEvent->setText(QString::fromStdString(\"Initializing\"));\n       currentFile->setText(QString::fromStdString(inputFile));\n       repaint();\n\n       TString TString_inputFile = inputFile;\n       TString biasVoltage = TString_inputFile(TString_inputFile.Last('_') + 1, TString_inputFile.Last('V') - TString_inputFile.Last('_') - 1);\n       V_Bias.push_back(atoi(biasVoltage.Data()));\n       std::cout.setstate(std::ios_base::failbit);\n       DataFileRoot* A = DataFileRoot::OpenFile(inputFile.c_str());//gives annoying unnecessary cout\n       std::cout.clear();\n\n       TH2D *hRawADC = new TH2D((biasVoltage + \"V_hRawADC\"), \"Raw ADC Data\", 256, 0, 256,300,0,1000);\n       hRawADC->GetXaxis()->SetTitle(\"Channel No.\");\n       hRawADC->GetYaxis()->SetTitle(\"ADC_Value[ADC]\");\n\n       TH2D *hPedSubADC = new TH2D((biasVoltage + \"V_hPedSubADC\"), \"Ped Sub ADC Data\", 256, 0, 256,300,-500,500);\n       hPedSubADC->GetXaxis()->SetTitle(\"Channel No.\");\n       hPedSubADC->GetYaxis()->SetTitle(\"ADC_Value[ADC]\");\n\n\n       TH2D *hCMSADC = new TH2D((biasVoltage + \"V_hCMSADC\"), \"Common Mode Subtraction ADC Data\", 256, 0, 256,300,-500,500);\n       hCMSADC->GetXaxis()->SetTitle(\"Channel No.\");\n       hCMSADC->GetYaxis()->SetTitle(\"ADC_Value[ADC]\");\n\n\n\n       TH1D *hRMSNoiseRawADC = new TH1D((biasVoltage + \"V_hRMSNoiseRawADC\"), \"RMS Noise Vs Channel, Raw ADC\", 256, 0, 256);\n       hRMSNoiseRawADC->GetXaxis()->SetTitle(\"Channel No.\");\n       hRMSNoiseRawADC->GetYaxis()->SetTitle(\"Noise[ADC]\");\n\n       TH1D *hRMSNoiseCMSADC = new TH1D((biasVoltage + \"V_hRMSNoiseCMSADC\"), \"RMS Noise Vs Channel, CMS ADC\", 256, 0, 256);\n       hRMSNoiseCMSADC->GetXaxis()->SetTitle(\"Channel No.\");\n       hRMSNoiseCMSADC->GetYaxis()->SetTitle(\"Noise[ADC]\");\n\n\n\n       TH1D *hTime = new TH1D((biasVoltage + \"V_hTime\"), \"Time Profile\", 100, 0, 100);\n       hTime->GetXaxis()->SetTitle(\"Time [ns]\");\n       hTime->GetYaxis()->SetTitle(\"Frequency\");\n\n\n       TH1D *hClusterPos = new TH1D((biasVoltage + \"V_hClusterPos\"), \"Cluster Position\", 256, 0, 256);\n       hClusterPos->GetXaxis()->SetTitle(\"Channel No.\");\n       hClusterPos->GetYaxis()->SetTitle(\"Frequency\");\n\n\n       TH1D *hClusterCharge = new TH1D((biasVoltage + \"V_hClusterCharge\"), \"Cluster Charge\", 800, 0, 800);\n       hClusterCharge->GetXaxis()->SetTitle(\"Cluster Charge [ADC]\");\n       hClusterCharge->GetYaxis()->SetTitle(\"Frequency\");\n\n       TH2D *hClusterVsTime = new TH2D((biasVoltage + \"V_hClusterVsTime\"), \"Cluster Charge vs Time\", 100, 0, 100,400,0,400);\n       hClusterVsTime->GetXaxis()->SetTitle(\"Time[ns]\");\n       hClusterVsTime->GetYaxis()->SetTitle(\"Cluster Charge[ADC]\");\n\n       TH1D *hClusterVsTimeProjection = new TH1D((biasVoltage + \"V_hClusterChargeVsTimeProjection\"), \"Cluster Charge Vs Time Projection\", 400, 0, 400);\n       hClusterVsTimeProjection->GetXaxis()->SetTitle(\"Cluster Charge [ADC]\");\n       hClusterVsTimeProjection->GetYaxis()->SetTitle(\"Frequency\");\n\n       TH1D *hClusterSize = new TH1D((biasVoltage + \"V_hClusterSize\"), \"Cluster Size\", 5, 0, 5);\n       hClusterSize->GetXaxis()->SetTitle(\"Cluster Size\");\n       hClusterSize->GetYaxis()->SetTitle(\"Frequency\");\n\n       TH1D *hclust = new TH1D((biasVoltage + \"V_hclust\"), \"Number of clusters\", 10, -0.5, 9.5);\n       hclust->GetXaxis()->SetTitle(\"Number of Clusters\");\n       hclust->GetYaxis()->SetTitle(\"Counts\");\n       TH1D *hcmmd = new TH1D((biasVoltage + \"V_hcmmd\"), \"Common Mode\", 200, -100.0, 100.0);\n       hcmmd->GetXaxis()->SetTitle(\"Common Mode\");\n       hcmmd->GetYaxis()->SetTitle(\"Counts\");\n\n       TH1D* hst = new TH1D((biasVoltage + \"V_hst\"), \"spectrum\", 250, 0., maxSignal);\n       hst->GetXaxis()->SetTitle(\"ADC\");\n       hst->GetYaxis()->SetTitle(\"Counts\");\n\n       TH1D *hst_pos = new TH1D((biasVoltage + \"V_hst_pos\"), \"spectrum Positive Signal\", 250, 0., maxSignal);\n       hst_pos->GetXaxis()->SetTitle(\"ADC\");\n       hst_pos->GetYaxis()->SetTitle(\"Counts\");\n\n       TH2D *htim = new TH2D((biasVoltage + \"V_htim\"), \"Time .vs. signal\", 50, 0., 100., 512, 0, maxSignal);\n       htim->GetXaxis()->SetTitle(\"Time[ns]\");\n       htim->GetYaxis()->SetTitle(\"Cluster Charge [ADC]\");\n\n       TProfile *hprof = new TProfile((biasVoltage + \"V_hprof\"), \"Time\", 50, 0., 100., -maxSignal, maxSignal);\n       hprof->GetXaxis()->SetTitle(\"Time[ns]\");\n       hprof->GetYaxis()->SetTitle(\"Cluster Charge [ADC]\");\n\n       TH2D *hchan = new TH2D((biasVoltage + \"V_hchan\"), \"Channel .vs. signal\", A->nchan(), -0.5, A->nchan()-0.5, 512, -0, maxSignal);\n       hchan->GetXaxis()->SetTitle(\"CHANNEL Number\");\n       hchan->GetYaxis()->SetTitle(\"Cluster Charge [ADC]\");\n\n       TH2D *hall = new TH2D((biasVoltage + \"V_hall\"), \"Signal (no cuts)\", A->nchan(), -0.5, A->nchan()-0.5, 300, -maxSignal, maxSignal);\n       hall->GetXaxis()->SetTitle(\"CHANNEL Number\");\n       hall->GetYaxis()->SetTitle(\"Cluster Charge [ADC]\");\n\n       TH2D *hchanwidth = new TH2D((biasVoltage + \"V_hchanwidth\"), \"Channel Cluster Widths\", A->nchan(), -0.5, A->nchan()-0.5, 15, 0., 15.);\n       hchanwidth->GetXaxis()->SetTitle(\"Channel Number\");\n       hchanwidth->GetYaxis()->SetTitle(\"Cluster Width\");\n\n       TH1D *hwidth = new TH1D((biasVoltage + \"V_hwidth\"), \"Cluster width\", 10, -0.5, 9.5);\n       hwidth->GetXaxis()->SetTitle(\"Cluster Width\");\n       hwidth->GetYaxis()->SetTitle(\"Counts\");\n\n       TH1D *hprecutwidth = new TH1D((biasVoltage + \"V_hprecutwidth Before Cuts\"), \"Cluster width\", 10, -0.5, 9.5);\n       hprecutwidth->GetXaxis()->SetTitle(\"Cluster Width\");\n       hprecutwidth->GetYaxis()->SetTitle(\"Counts\");\n\n       TH1D *hstrips[A->nchan()];\n\n       TH1D *htotal=new TH1D((biasVoltage + \"V_\" + \"htotal\"), \"\", 250, 0.,maxSignal);\n       htotal->GetXaxis()->SetTitle(\"Cluster Charge [ADC]\");\n       htotal->GetYaxis()->SetTitle(\"Counts\");\n\n       for(int j=0; j<A->nchan(); j++)\n\t {\n\t   TString ChanNum; ChanNum.Form(\"%d\",j);\n\t   hstrips[j] = new TH1D((biasVoltage + \"V_\" + ChanNum), \"\",A->nchan(),-2*maxSignal, 0);\n\t }\n       debuggingOutput << \"Histograms Initialized\";\n\n       ////////////////////////////CUTS//////////////////////////\n       //seedCut is the threshold a single channel needs to be to start a cluster,\n       //neighbourCut is the threshold a neighbouring channels needs to be to be added to a cluster,\n       //these are both how much above the noise of the channel they must be.\n       //timecut is the time between the signal being received by the scintillator+pmt trigger and the signal arriving at the sensors (possibly nanoseconds)\n\n       A->set_cuts(seedCut, neighbourCut);\n       double t1{lowerTimeCut}, t2{upperTimeCut};// set to some arbitary value\n       A->set_timecut(t1, t2);\n       ///////////////////////////////////////////////////////////\n       A->save();\n       A->rewind();\n\n       std::cout.setstate(std::ios_base::failbit);\n       A->compute_pedestals(-1,true); //gives annoying unnecessary cout\n       std::cout.clear();\n\n\n\n       A->save_pedestals(ped_f.c_str());\n\n       TCanvas *pcnvs = (TCanvas *)gROOT->FindObject(\"pcnvs\");\n       if (pcnvs)  delete pcnvs;\n\n       pcnvs = new TCanvas(\"pcnvs\",\"Pedestals and Noise\");\n       pcnvs->Divide(1, 2);\n       pcnvs->cd(1);\n       A->show_pedestals()->DrawCopy();\n       pcnvs->cd(2);\n       A->show_noise()->DrawCopy();\n       pcnvs->Update();\n       A->restore();\n       outputFile->cd();\n       pcnvs->Write();\n       A->load_pedestals(ped_f.c_str());\n\n       ChanList channelList = ChanList(channels.c_str());\n       A->common_mode(channelList,true);\n\n\n       int currentEventNumber{0}, LowerProjectionTimeCut{0},UpperProjectionTimeCut{0};\n       while(!A->read_event()){ //read_event returns 0 if event succesfully ran.\n\t ++currentEventNumber;\n\t UpperProjectionTimeCut = LowerProjectionTimeCut+2;\n\t int j{0},k{0};\n\n\t A->process_event(false); //argument is do_cmmd subtraction or not\n\n\t for (int i=0;i<channelList.Nch();++i){\n\t   //the signal searched for is negative so in cases where it is compared to noise, multiply by -1 to make it positive like noise is by default.\n\t   //NOTE: do NOT Just use fabs(signal). The signal can be positive but we do not want positive signal.\n\t   double signal{A->signal(channelList[i])};\n\n\t   debuggingOutput << \"Channel:\" << i << \":\" << channelList[i];\n\n\t   hall->Fill(channelList[i], -1.0*signal);\n\t   hRawADC->Fill(channelList[i],A->data(channelList[i]));\n\t   hPedSubADC->Fill(channelList[i],A->data(channelList[i])-A->ped(channelList[i]));\n\t   hCMSADC->Fill(channelList[i],A->data(channelList[i])-A->get_cmmd(channelList[i])-A->ped(channelList[i]));\n\t   hRMSNoiseRawADC->SetBinContent(channelList[i]+1,A->noise(channelList[i]));\n\t   hRMSNoiseCMSADC->SetBinContent(channelList[i]+1,A->noise(channelList[i])-A->get_cmmd(channelList[i]));\n\t   hTime->Fill(A->time());\n\n\t   hstrips[i]->Fill(-1.0*A->data(channelList[i]));\n\n\t   if(-1.0*signal < seedCut*A->noise(channelList[i])) continue;\n\n\t   if (true){\n\t     //The first for loop goes up from a channel that passes the seedcut, the second down.\n\t     //They continue until they reach a channel that does not pass the neighbourCut, creating a cluster.\n\t     int clusterSize{0};\n\t     for (j=1;j<128;++j){\n\t       if(i+j>127) break;\n\t       double neighsignal = A->signal(channelList[i+j]);\n\t       double neighnoise = A->noise(channelList[i+j]);\n\t       if(fabs(neighsignal/neighnoise) < neighbourCut || neighsignal >= 0. || neighnoise <= 0.) break;\n\t       signal += neighsignal;\n\t       ++clusterSize;\n\t     }\n\t     for (k=1;k<128;++k){\n\t       if(i-k < 0) break;\n\t       double neighsignal = A->signal(channelList[i-k]);\n\t       double neighnoise = A->noise(channelList[i-k]);\n\t       if(fabs(neighsignal/neighnoise) < neighbourCut || neighsignal >= 0. || neighnoise <=0.) break;\n\t       signal += neighsignal;\n\t       ++clusterSize;\n\t     }\n\n\t     if(clusterSize<minimumClusterSize) continue; //tiny clusters are just noise.\n\t     htotal->Fill(-1.0*signal);\n\t     i=i+j-1; //skip for loop past any channel in found cluster.\n\t   }\n\t }\n\n\t //====================================\n\t //======== ALiBaVa Processing ========\n\t //=================================std::vector<long double> Temperature===\n\n\t A->polarity(-1);\n\t A->find_clusters( SensorTypeEntry ); //0 for new sensors, 1 for old.\n\t hclust->Fill(A->nhits());\n\n\t bool GoodStrip{false};\n\t for (HitList::iterator ip=A->begin(); ip!=A->end(); ++ip){\n\t   Hit &h =*ip;\n\n\t   //remove first and last in each chip\n\t   if (!h.center()%128) continue;\n\n\t   hprecutwidth->Fill(h.width());\n\n\t   if ((A->time()<lowerTimeCut||A->time()>upperTimeCut) && contains_substring(sensorName,\"KAZU\")) continue;  //Set time cut 15 25 original and working\n\t   if ((A->time()<lowerTimeCut||A->time()>upperTimeCut)  && !contains_substring(sensorName,\"KAZU\")) continue;\n\t   hchanwidth->Fill(h.center(),h.width());\n\t   hClusterPos->Fill(h.center());\n\t   if (A->valid_time(A->time())) {hwidth->Fill(h.width()); hClusterSize->Fill(h.width());}\n\t   if (-1.0*h.signal()>hst_pos->GetBinCenter(hst_pos->GetNbinsX())) continue;\n\t   if (A->valid_time(A->time())) hchan->Fill(h.center(), -1.0*h.signal());\n\t   GoodStrip = true;\n\t   hst->Fill(-1.0*h.signal());\n\t   hClusterCharge->Fill(-1.0*h.signal());\n\t   hClusterVsTime->Fill(A->time(),-1.0*h.signal());\n\t   hClusterVsTimeProjection = hClusterVsTime->ProjectionY(\"V_hClusterChargeVsTimeProjection\",LowerProjectionTimeCut,UpperProjectionTimeCut);\n\n\t   htim->Fill(A->time(), -1.0*h.signal());\n\t   hprof->Fill(A->time(), -1.0*h.signal());\n\t }\n\t if(GoodStrip) hcmmd->Fill(A->get_cmmd(1));\n\t if (!(currentEventNumber%100)) {\n\t   currentEvent->setText(QString::fromStdString(std::to_string(currentEventNumber)));\n\t   // Plot hst in real time\n\t   QVector<double> x, y;\n\t   for (int i=0; i<hst->GetNbinsX(); ++i)\n\t     {\n\t       x.push_back(hst->GetBinCenter(i));\n\t       y.push_back(hst->GetBinContent(i));\n\t     }\n\t   QVector<double> x1, y1;\n\t   for (int i=0; i<hClusterVsTimeProjection->GetNbinsX(); ++i)\n\t     {\n\t       x1.push_back(hClusterVsTimeProjection->GetBinCenter(i));\n\t       y1.push_back(hClusterVsTimeProjection->GetBinContent(i));\n\t     }\n\n\t   histogram->graph(0)->setData(x,y);\n\n                       \n\t   Qhtotal->graph(0)->setData(x1,y1);\n\t   QString QhtotalXTitle;\n\t   std::string tempTimeLimits;\n\t   int binmax = hClusterVsTimeProjection->GetMaximumBin();\n\t   double binMaxX = hClusterVsTimeProjection->GetXaxis()->GetBinCenter(binmax);\n\n\t   tempTimeLimits = \"ADC, TimeCut: \" + std::to_string(LowerProjectionTimeCut) + \"_\" + std::to_string(UpperProjectionTimeCut) + \" ,Mean:\" + std::to_string(hClusterVsTimeProjection->GetMean()) + \", Peak:\" + std::to_string(binMaxX);\n\t   QhtotalXTitle = QString::fromStdString(tempTimeLimits);\n\t   Qhtotal->xAxis->setLabel(QhtotalXTitle);\n                        \n                        \n\t   hClusterVsTime->Draw();\n\t   //TImage *img = TImage::Create();\n\t   //img->FromPad(c);\n\t   //img->WriteImage(\"temp.png\");\n\t   //QPixmap ClusterTimePictureImage;\n\t   //ClusterTimePictureImage.load(\"temp.png\");\n\t   //ClusterTimePicture->setPixmap(ClusterTimePictureImage);\n\t   Qhtotal->replot();\n\t   histogram->replot();\n\t   repaint();\n\t   if (!(currentEventNumber%4000)) {\n\t     ++LowerProjectionTimeCut;\n\t   }\n\t }\n\t if (LowerProjectionTimeCut==25){\n\t   LowerProjectionTimeCut=0;\n\t }\n       }\n       TDirectory *currentBiasDirectory = outputFile->mkdir(biasVoltage);\n       currentBiasDirectory->cd();\n\n       hRawADC->Write();\n       hPedSubADC->Write();\n       hCMSADC->Write();\n       hRMSNoiseRawADC->Write();\n       hRMSNoiseCMSADC->Write();\n       hTime->Write();\n       hClusterPos->Write();\n       hClusterCharge->Write();\n       hClusterVsTime->Write();\n       hClusterVsTimeProjection->Write();\n       hClusterSize->Write();\n\n\n\n       hclust->Write();\n       hclust->SetStats(0);\n       hcmmd->Write();\n       hcmmd->SetStats(0);\n       hst->Write();\n       hst->SetStats(0);\n       hst_pos->Write();\n       hst_pos->SetStats(0);\n       htim->Write();\n       htim->SetStats(0);\n       hprof->Write();\n       hprof->SetStats(0);\n       hchan->Write();\n       hchan->SetStats(0);\n       hall->Write();\n       hall->SetStats(0);\n       hchanwidth->Write();\n       hchanwidth->SetStats(0);\n       hwidth->Write();\n       hwidth->SetStats(0);\n       hprecutwidth->Write();\n       hprecutwidth->SetStats(0);\n       htotal->SetStats(0);\n       htotal->Write();\n\n       int maxi = hwidth->GetNbinsX();\n\n       double width, volts;\n\n       std::ofstream f_widths;\n       f_widths.open(outputDirectory+\"/\"+biasVoltage+\"V_width_output_PF.csv\");\n\n       for(int ii=0; ii< maxi+2; ii++ ){\n\t //CCE_hist->GetPoint(i, volts, charges);\n\t f_widths << hwidth->GetBinCenter(ii);\n\t f_widths <<\", \";\n\t f_widths << hwidth->GetBinContent(ii);\n\t f_widths<< \"\\n\";\n       }\n\t\t\n       f_widths.close();\n\n       hst_hists.push_back(hst);\n       h_width_hists.push_back(hwidth);\n\n       stripFile->cd();\n       TDirectory *currentStripDirectory = stripFile->mkdir(biasVoltage);\n       currentStripDirectory->cd();\n\n       for(int j=0; j<128; j++){\n\t hstrips[j]->SetStats(0);\n\t hstrips[j]->Write();\n       }\n\n       delete A;\n     }\n     if (!outputDirectoryAlreadyExists){\n       stripFile->Close();\n       delete stripFile;\n       outputFile->Close();\n       delete outputFile;\n     }\n     if (outputDirectoryAlreadyExists) currentFile->setText(QString::fromStdString(\"OUTPUT DIRECTORY ALREADY EXISTS\"));\n     currentEvent->setText(QString::fromStdString(\"FINISHED\"));\n     repaint();\n\n     // /////////////////FITTER///////////////\n     //  sensorName,statusEntry,outputDirectory\n\n     std::cout << \"\\n\" << (outputDirectory+\"/RAW_\"+sensorName+\".root\").c_str() << \"\\n\";\n     TFile* FileWithRawPlots = new TFile((outputDirectory+\"/RAW_\"+sensorName+\".root\").c_str(), \"READ\");\n     std::vector<TH1*> hst_histsNew,h_width_histsNew;\n     std::vector<int> V_BiasNew;\n     loopdir(FileWithRawPlots,V_BiasNew,hst_histsNew,h_width_histsNew);\n     /*\n       TIter next(FileWithRawPlots->GetListOfKeys());\n       TKey *key;\n       (FileWithRawPlots->GetListOfKeys())->Print();\n       std::vector<TH1*> hst_histsNew,h_width_histsNew;\n     */\n\n\n\n     /*\n       while ((key=(TKey*)next())){\n       TIter nextInner(FileWithRawPlots->GetListOfKeys());\n       TKey *keyNext;\n       (FileWithRawPlots->GetListOfKeys())->Print();\n\n\n\n\n       TString KeyName = key->GetName();\n       std::cout << \"In Here!!!!\" << \"\\n\";\n       if(KeyName.EndsWith(\"_hst\")){\n       TH1* hstNew = (TH1*) FileWithRawPlots->GetName();\n       hst_histsNew.push_back(hstNew);\n       }\n       if(KeyName.EndsWith(\"_hwidth\")){\n       TH1* hwidthNew = (TH1*) FileWithRawPlots->GetName();\n       h_width_histsNew.push_back(hwidthNew);\n       }\n       }\n     */\n\n     TFile* FittedPlots = new TFile((outputDirectory+\"/PROCESSED_\"+sensorName+\".root\").c_str(),\"RECREATE\");\n     FittedPlots->cd();\n\n\n     std::vector<double> VoltsVec;\n     std::vector<double> PeakVec;\n     std::vector<double> PeakErrVec;\n     std::vector<double> WidthVec;\n\n     std::vector<double> oneHitFrac,twoHitFrac,threeHitFrac,fourHitFrac,fourOrMoreHitFrac;\n     /* std::vector<double> oneHitFrac,twoHitFrac,threeHitFrac,fourHitFrac,fiveHitFrac; */\n     std::vector<double> voltsscan;\n     double fitStart = 10;\n     double fitEnd = 150;\n     if (contains_substring(sensorName,\"KAZU\")) fitEnd=250;\n\n     std::cout << \"\\n\\n\\nTEST\" << h_width_histsNew.size() << \"\\n\";\n     //std::cout << hst_histsNew.at(0)->GetBin(1);\n\n     for (int i=0; i<hst_histsNew.size();++i){\n       TF1* FuncLandau = new TF1(\"FuncLandau\",\"landau(0)\",fitStart,fitEnd);\n       hst_histsNew[i]->Fit(\"FuncLandau\",\"MR\");\n\n       double peak = (FuncLandau->GetParameter(1));\n       double peakerr = FuncLandau->GetParError(1);\n       /* double peak = hst_histsNew[i]->GetXaxis()->GetBinCenter(hst_histsNew[i]->GetMaximumBin()); */\n       /* double peakerr = hst_histsNew[i]->GetBinWidth(hst_histsNew[i]->GetMaximumBin()); */\n       double width = FuncLandau->GetParameter(2);\n       double widtherr = FuncLandau->GetParError(2);\n\n       landgausfit(FittedPlots,hst_histsNew.at(i),peak,peakerr,width,widtherr,(std::to_string(statusEntry)).c_str(),V_BiasNew.at(i),sensorName.c_str(), pathToAnalysisDirectory.c_str());\n\n       VoltsVec.push_back(V_BiasNew.at(i));\n       PeakVec.push_back(peak);\n       PeakErrVec.push_back(peakerr);\n       WidthVec.push_back(width);\n\n       oneHitFrac.push_back( h_width_histsNew.at(i)->GetBinContent(2)/h_width_histsNew.at(i)->Integral());\n       twoHitFrac.push_back( h_width_histsNew.at(i)->GetBinContent(3)/h_width_histsNew.at(i)->Integral());\n       threeHitFrac.push_back( h_width_histsNew.at(i)->GetBinContent(4)/h_width_histsNew.at(i)->Integral());\n       fourHitFrac.push_back( h_width_histsNew.at(i)->GetBinContent(5)/h_width_histsNew.at(i)->Integral());\n       fourOrMoreHitFrac.push_back( (h_width_histsNew.at(i)->Integral()-h_width_histsNew.at(i)->GetBinContent(2)-h_width_histsNew.at(i)->GetBinContent(3)-h_width_histsNew.at(i)->GetBinContent(4)-h_width_histsNew.at(i)->GetBinContent(5))/h_width_histsNew.at(i)->Integral());\n       /* fiveHitFrac.push_back( h_width_histsNew.at(i)->GetBinContent(6)/h_width_histsNew.at(i)->Integral()); */\n       voltsscan.push_back(V_BiasNew.at(i));\n     }\n     TGraphErrors *Peak_VScan = new TGraphErrors(VoltsVec.size(),&VoltsVec[0],&PeakVec[0],0,&PeakErrVec[0]);\n     Peak_VScan->SetName(\"Peak_VScan\");\n     TGraphErrors *Width_VScan = new TGraphErrors(VoltsVec.size(),&WidthVec[0],&WidthVec[0],0,&PeakErrVec[0]);\n     Width_VScan->SetName(\"Width_VScan\");\n\n     Peak_VScan->Write();\n     Width_VScan->Write();\n     FittedPlots->Close();\n\n\n     TGraph *g_oneHitFrac = new TGraph(voltsscan.size(),&voltsscan[0],&oneHitFrac[0]);\n     TGraph *g_twoHitFrac = new TGraph(voltsscan.size(),&voltsscan[0],&twoHitFrac[0]);\n     TGraph *g_threeHitFrac = new TGraph(voltsscan.size(),&voltsscan[0],&threeHitFrac[0]);\n     TGraph *g_fourHitFrac = new TGraph(voltsscan.size(),&voltsscan[0],&fourHitFrac[0]);\n     TGraph *g_fourOrMoreHitFrac = new TGraph(voltsscan.size(),&voltsscan[0],&fourOrMoreHitFrac[0]);\n     /* TGraph *g_fiveHitFrac = new TGraph(voltsscan.size(),&voltsscan[0],&fiveHitFrac[0]); */\n\n     TFile* WidthSaveFile = new TFile((outputDirectory + \"/ClusterSize.root\").c_str(), \"RECREATE\");\n     g_oneHitFrac->Write(\"onehit\");\n     g_twoHitFrac->Write(\"twohit\");\n     g_threeHitFrac->Write(\"threehit\");\n     g_fourHitFrac->Write(\"fourhit\");\n     g_fourOrMoreHitFrac->Write(\"fourormorehit\");\n     /* g_fiveHitFrac->Write(\"fivehit\"); */\n     WidthSaveFile->Close();\n\n\n#ifdef __CINT__\n     gROOT->LoadMacro(\"/home/aliuser/Documents/ALiBaVaReaderGUI/AtlasStyle.C\");\n#endif\n     SetAtlasStyle();\n     TString Status;\n     if(statusEntry == 0) Status = \"Unirradiated\";\n     else if(statusEntry == 1) Status = \"IrradPreAnneal\";\n     else if(statusEntry == 2) Status = \"IrradPostAnneal\";\n\n\n     TFile *SaveFile = new TFile((outputDirectory +\"/\" + \"PROCESSED_\"+ sensorName + \".root\").c_str(), \"READ\");\n\n     TGraphErrors* CCE_hist;\n     TGraphErrors* WidthScan_hist;\n\n     CCE_hist = (TGraphErrors*) SaveFile->Get(\"Peak_VScan\");\n     WidthScan_hist = (TGraphErrors*) SaveFile->Get(\"Width_Vscan\");\n\n     CCE_hist->SetMinimum(0);\n                \n\n     TFile *CCEFile = new TFile((pathToAnalysisDirectory+\"/Combined/CCE_Store.root\").c_str(), \"UPDATE\");\n     CCE_hist->Write(sensorName+\"_\"+Status,TObject::kOverwrite);\n\n     //gDirectory->Delete(\"Sensor1_12Jan16_KAZU_100nA_enclosed_foils_dummy_IrradPreAnneal;1\"); //Delete incorrect histograms in rootfile here!\n     //gDirectory->Delete(\"Sensor2_12Jan16_KAZU_100nA_enclosed_foils_dummy_IrradPostAnneal;1\");\n     CCEFile->Close();\n     TCanvas *can = new TCanvas(sensorName.c_str(),sensorName.c_str(),900,700);\n     //TAxis *axis = CCE_hist->GetXaxis();\n     //Defining Axes Labels for CCE_Scan in Output Folder\n     CCE_hist->GetXaxis()->SetTitle(\"Bias Voltage [V]\");\n     CCE_hist->GetYaxis()->SetTitle(\"Collected Charge [ADC]\");\n\n     CCE_hist->Draw(\"ap\");\n\n     \n     Double_t voltages=0;\n     Double_t charges=0;\n     Double_t errors=0;\n\n     std::ofstream myfile;\n     myfile.open(outputDirectory+\"/CCE_output_PF.csv\");\n     int i{0};\n\n     for(i=0; i<CCE_hist->GetN(); i++) {\n       CCE_hist->GetPoint(i, voltages, charges);\n       errors = CCE_hist->GetErrorY(i);\n       myfile << voltages;\n       myfile <<\", \";\n       myfile << charges;\n       myfile <<\", \";\n       myfile << errors;\n       myfile<< \"\\n\";\n     }\n\n     \n     //Double_t *Voutput =   \tCCE_hist->GetX();\n     //Double_t *CCEoutput =   \tCCE_hist->GetY();\n\n\t\t\t\t\n     //myfile <<Voutput;\n     //myfile<< CCEoutput;\n     myfile.close();\n           \n     can->SaveAs((outputDirectory + \"/CCEScan_\" + sensorName+\"_\"+ Status +\".png\"));\n     can->Close();\n\n     ClusterwidthPlots(pathToAnalysisDirectory,sensorName.c_str(), Status,std::to_string(statusEntry).c_str());\n\n     SaveFile->Close();\n\n     TFile *CCEFile2 = new TFile((pathToAnalysisDirectory+\"/Combined/CCE_Store.root\").c_str(), \"READ\");\n     std::vector<TGraphErrors*> CCE_overlay;\n     std::vector<TString> CCE_labels;\n     std::vector<TString> CCE_sensor;\n     TString PlotTitle = PlotTitleString.c_str();\n\n\n\n\n     std::ifstream overlayFile(pathToAnalysisDirectory+\"/OverlayList.txt\");\n     std::vector<TString> GraphList;\n     std::string line;\n\n     while (std::getline(overlayFile, line))\n       {\n\t GraphList.push_back(line);\n       }\n     std::cout << \"\\n\" << GraphList.at(0) << \"\\n\";\n\n\n\n\n\n     for(size_t i = 0; i<GraphList.size(); i++)\n       {\n\n\t TIter next(CCEFile2->GetListOfKeys());\n\t TKey *key;\n\n\t while ((key=(TKey*)next()))\n\t   {\n\t     TString KeyName = key->GetName();\n\n\t     //\t  std::cout << i << std::endl;\n\t     //\t  std::cout << GraphList[i].Data() << std::endl;\n\t     if(KeyName.Contains(GraphList[i],TString::kExact))\n\t       {\n\t\t //std::cout << KeyName.Data() << std::endl;\n\t\t TString graphLabel = \"\";\n\t\t if(KeyName.Contains(\"UNKNOWNA12\",TString::kExact)) graphLabel = \"Unirradiated_Sensor\";\n\t\t else if(KeyName.Contains(\"2nd_Anneal\",TString::kExact)) graphLabel = \"Sensor1_12Jan16_PostAnneal\" ;\n\t\t //else if(KeyName.Contains(\"3rd_Anneal\",TString::kExact)) graphLabel = GraphList[i];\n\t\t else if(KeyName.Contains(\"IrradPreAnneal\",TString::kExact)) graphLabel = GraphList[i] + \"_PreAnneal\";\n\t\t else if(KeyName.Contains(\"IrradPostAnneal\",TString::kExact)) graphLabel = GraphList[i] + \"_PostAnneal\";\n\t\t else if(KeyName.Contains(\"Unirradiated\",TString::kExact)) graphLabel = GraphList[i] + \"_Unirrad\";\n\n\t\t std::cout << GraphList[i] << std::endl;\n\t\t CCE_labels.push_back(graphLabel);\n\t\t CCE_overlay.push_back((TGraphErrors*) CCEFile2->Get(KeyName.Data()));\n\t\t CCE_sensor.push_back(GraphList[i]);\n\t       }\n\t   }\n\n       }\n\n     PlotTitle += \"_CCEScan\";\n\n     Plotter(CCE_overlay, CCE_labels,CCE_sensor, PlotTitle, pathToAnalysisDirectory, Temperature );\n\n     CCEFile2->Close();\n\n\n\n\n\n   }\n\n};\n\n\n\n\n#endif // WINDOW_H\n",
+			"file": "/home/aliuser/alibava/ALiBaVaReaderGui/window.h",
+			"file_size": 48163,
+			"file_write_time": 131848665242123907,
+			"settings":
+			{
+				"buffer_size": 48162,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "Packages/C++/C++ Single File.sublime-build",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					""
+				],
+				[
+					"Packages/C++/C++ Single File.sublime-build",
+					"Run"
+				]
+			],
+			[
+				"Packages/C++/C++ Single File.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"console":
+	{
+		"height": 0.0,
+		"history":
+		[
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/home/aliuser/Documents/ALiBaVaReaderGUI/window.h",
+		"/home/aliuser/Documents/ALiBaVaReaderGUI/window.o",
+		"/home/aliuser/Documents/build-ALiBaVaReaderGUI-Desktop-Debug/window.o"
+	],
+	"find":
+	{
+		"height": 28.0
+	},
+	"find_in_files":
+	{
+		"height": 0.0,
+		"where_history":
+		[
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": false,
+		"find_history":
+		[
+			"timecut",
+			"old",
+			"old s",
+			"hst_hi",
+			"frame",
+			"Draw",
+			"landgausfit",
+			"png",
+			"timecut",
+			"time",
+			"overla",
+			"hwidth",
+			"_P",
+			"outputDirectory3",
+			"outputDirectory",
+			"outputDirectory3",
+			"_PF",
+			"outputDirectory",
+			"output",
+			"<10",
+			"_PF",
+			"biasVoltage",
+			"myfile",
+			"}\n",
+			"myfi",
+			"maxi",
+			"hwidth",
+			"width_hist",
+			"width",
+			".png",
+			"landgausfit",
+			".png",
+			"Width",
+			"WidthScan",
+			"WidthScan_hist",
+			"cce_hist",
+			"ofstream",
+			"ofstr",
+			"cce_hist",
+			"cce",
+			"width",
+			"cce",
+			"range",
+			"hst_new",
+			"loopdir",
+			"hst_histsNew",
+			"for",
+			"eak_VScan",
+			"VoltsVec",
+			"&VoltsVec",
+			"size",
+			"CCEfil",
+			"CCE_overlay",
+			"cce",
+			"cceoverlay",
+			"plotter",
+			"cce",
+			"can ",
+			"plotter",
+			"Graphlist",
+			"GraphLIst",
+			"OverlayList",
+			"FileList",
+			"status",
+			"cce",
+			"temperature",
+			"calibration",
+			"CCE",
+			"time",
+			"CCE",
+			"Pea_VScan",
+			"CCE",
+			"CCEScan",
+			"Counts",
+			"TCanvas",
+			"tpad",
+			"public",
+			"can ",
+			"ccescan",
+			"setting",
+			"1000",
+			"can",
+			"sensorName",
+			"status",
+			"unirradiated",
+			"ADC",
+			"TCanvas",
+			"TGraph",
+			"CCE",
+			"CCE ",
+			"CCEscan",
+			"output",
+			"double",
+			"ap",
+			"frame",
+			"ytitle",
+			"Xtitle",
+			"signal",
+			"events",
+			"output",
+			"clustersize",
+			"CCE",
+			"ap",
+			"status",
+			"anneal",
+			"unirradiated",
+			"15",
+			"comma",
+			"settings",
+			"graph",
+			"histogram",
+			"update",
+			"canvas",
+			"parent",
+			"histogram",
+			"custom",
+			"histogram",
+			"customplot",
+			"confirm",
+			"plot",
+			"128",
+			"127",
+			"142",
+			"141",
+			"140",
+			"127",
+			"500",
+			"confirm"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"/home/aliuser/Documents/qcustomplot/ALiBaVaReaderGUI/",
+			"/home/aliuser/Documents/qcustomplot",
+			"/home/aliuser/Documents/boost_1_67_0/",
+			"/home/aliuser/Documents/qcustomplot/",
+			"/home/aliuser/Documents/ALiBaVaReaderGUI/",
+			"/home/aliuser/Documents/ALiBaVaReaderGUI",
+			"qcustomplot-source",
+			"/home/aliuser/Documents/qcustomplot",
+			"home/jhl/Desktop/qtcustomplot/qcustomplot",
+			"/home/aliuser/Documents/boost_1_67_0",
+			"/home/aliuser/Documents/ALiBaVaReaderGUI",
+			"/home/aliuser/Documents/qcustomplot",
+			"/home/aliuser/Documents/"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "window.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 48162,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6487,
+								6487
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 4669.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "/home/aliuser/alibava/ALiBaVaReaderGui/window.h",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 48162,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6715,
+								6715
+							]
+						],
+						"settings":
+						{
+							"syntax": "Packages/C++/C++.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 4860.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 28.0
+	},
+	"input":
+	{
+		"height": 0.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 132.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "",
+	"project": "untitled.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": true,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 150.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

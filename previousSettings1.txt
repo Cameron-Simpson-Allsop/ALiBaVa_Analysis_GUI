@@ -1,0 +1,12 @@
+/home/aliuser/Board2_200619
+/home/aliuser/Board2_200619/Output
+RSRun20Jun19ATLAS12W109P3unirrad1
+0
+3.5
+1.8
+4
+5
+20
+20.0,20.0,20.0,20.0
+OverlayPlot
+0

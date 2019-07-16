@@ -1,0 +1,186 @@
+#include <iostream>
+#include <string>
+#include <cstdlib>
+#include <unistd.h>
+#include <TH1.h>
+#include <TH2.h>
+#include <TROOT.h>
+#include <TStyle.h>
+#include <TCanvas.h>
+#include <TApplication.h>
+#include <TFile.h>
+#include <getopt.h>
+#include "DataFileRoot.h"
+#include "analysis.h"
+#include "Tracer.h"
+#include "sin_preguntas.h"
+
+
+int main(int argc, char **argv)
+{
+    std::string channel_list;
+    std::string pedestal_file;
+    std::string calibration_file;
+    std::string input_file;
+    std::string output_file("alibava.root");
+    std::string prog_name;
+    const char *ped_file=0;
+    const char *cal_file=0;
+    int polarity = -1;
+    bool dofit = true;
+    double tfirst=15.0, tlast=25.0;
+    double seed_cut=5.0, neigh_cut=3.0;
+
+    char c;
+    int this_option_optind;
+    int option_index;
+    int iverbose=0;
+    static struct option long_options[] =
+    {
+     { "out", 1, 0, 'o' }, // Output file
+     { "pedestals", 1, 0, 'p' },
+     { "calibration", 1, 0,'g' },
+     { "map", 1,0,'m'},
+     { "debug", 0, &iverbose, 1 },
+     { "tdc-low", 1, 0, 'u'},
+     { "tdc-high", 1, 0, 'v'},
+     { "polarity", 1, 0, 's'},
+     { "seed_cut", 1, 0, 'a'},
+     { "neigh_cut", 1, 0, 'b'},
+     { "channel-list", 1, 0, 'x'},
+     { "help", 0, 0, 'h' },
+     {0, 0, 0, 0 }
+    };
+
+
+    /*
+     *  Get the program name
+     */
+    prog_name = argv[0];
+    std::string::size_type jpos = prog_name.rfind('/');
+    if (jpos!=prog_name.npos)
+        prog_name = prog_name.substr(jpos+1);
+
+    /*
+     * Loop on command line arguments
+     */
+    while ( 1)
+    {
+        this_option_optind = optind ? optind : 1;
+        option_index = 0;
+        c = getopt_long(argc, argv, ":u:v:n:p:g:m:ho:e:z:", long_options, &option_index);
+        if (c==-1)
+            break;
+        switch (c)
+        {
+            case 0:
+                break;
+            case 'o':
+                output_file=optarg;
+                break;
+            case 'p':
+                pedestal_file=optarg;
+                std::cout << "Pedestal file:" << pedestal_file << std::endl;
+                break;
+            case 'g':
+                calibration_file=optarg;
+                std::cout << "Calibration file:" << calibration_file << std::endl;
+                break;
+            case 'u':
+                tfirst = atof(optarg);
+                break;
+            case 'v':
+                tlast = atof(optarg);
+                break;
+            case 'a':
+                seed_cut = atof(optarg);
+                break;
+            case 'b':
+                neigh_cut = atof(optarg);
+                break;
+            case 's':
+                polarity = atoi(optarg);
+                break;
+            case 'x':
+                std::cout << "*** " << optarg << std::endl;
+                channel_list = optarg;
+                break;
+            case '?':
+                std::cout << "Something went wrong: optind " << option_index << " - " << argv[option_index]  << std::endl;
+                break;
+            case 'h':
+                std::cout << "Usage: " << prog_name
+                          << " [options] " << std::endl
+                          << "Posible options: "
+                          << std::endl;
+                for (int i=0; long_options[i].name; i++)
+                    std::cout << "\t--" << long_options[i].name
+                              << " , -"
+                              << (char) long_options[i].val
+                              << std::endl;
+
+                return -1;
+                break;
+            default:
+                std::cout << prog_name << " -> " << (char)optopt << " " << argv[optind]
+                                                                               << std::endl;
+                std::cout << "Ughhhhh !!!!" << std::endl;
+                return -1;
+                break;
+        }
+    }
+
+    /**
+     * TODO: proccess all the input files
+    while (optind<argc)
+        input_files.push_back(argv[optind++]);
+     */
+    if (optind < argc)
+        input_file = argv[optind++];
+
+    if (input_file.empty())
+    {
+        std::cout << "I need an input file" << std::endl;
+        return -1;
+    }
+
+    gROOT->SetBatch(false);
+    TApplication *app = new TApplication("theApp",&argc, argv);
+    gROOT->SetStyle("Plain");
+    gStyle->SetPalette(1);
+    init_landau();
+
+    TFile *ofile = new TFile(output_file.c_str(), "RECREATE");
+    DataFileRoot *A = DataFileRoot::OpenFile(input_file.c_str());
+
+    A->set_cuts(seed_cut, neigh_cut);
+
+    if (!pedestal_file.empty())
+    {
+        std::cout << "Using pedestal file: " << pedestal_file << std::endl;
+        ped_file = pedestal_file.c_str();
+    }
+    if (!calibration_file.empty())
+    {
+        std::cout << "Using calibration file " << calibration_file << std::endl;
+        cal_file = calibration_file.c_str();
+    }
+
+    channel_list = "135-232";
+
+    if (!channel_list.empty())
+    {
+        std::cout << "Channel List: " << channel_list << std::endl;
+        A->add_channel_list( ChanList(channel_list.c_str()) );
+    }
+    sin_preguntas(A, 0, cal_file, ped_file, polarity, dofit,tfirst, tlast);
+    std::cout << "Saving in " << ofile->GetName() << std::endl;
+    ofile->Write();
+
+    app->Run(true);
+
+    ofile->Close();
+    delete ofile;
+    delete A;
+    delete app;
+}
